@@ -1,4 +1,5 @@
 import cv2
+from PIL import Image
 import subprocess
 import torch
 import numpy as np
@@ -6,16 +7,31 @@ from notebook.utils import setup_sam_3d_body
 from tools.vis_utils import visualize_sample_together
 
 # Set up the estimator
-# estimator = setup_sam_3d_body(hf_repo_id="facebook/sam-3d-body-dinov3")
+estimator = setup_sam_3d_body(hf_repo_id="facebook/sam-3d-body-dinov3")
 
-img_path = '/home/jess/Downloads/cpr_vids/placetheotherhandontopofthefirst/nus_cpr_19_1/18.6457/cam01/output_001.png'
+img_path = '/home/jess/Downloads/cpr_vids/placetheotherhandontopofthefirst/nus_cpr_19_1/18.6457/cam01/output_002.png'
+make_2d_obj_mask_path = '/home/jess/sam3/make_mask.sh'
+output_path = '/home/jess/sam-3d-body/test_img.png'
+subprocess.run(["bash", make_2d_obj_mask_path, img_path, output_path])
+object_seg_2d = Image.open(output_path)
+obj_img_array = np.array(object_seg_2d)
+
+# object_seg_2d.show()
+
 
 # # Load and process image
-# img_bgr = cv2.imread('/home/jess/Downloads/cpr_vids/placetheotherhandontopofthefirst/nus_cpr_19_1/18.6457/cam01/output_001.png')
-# outputs = estimator.process_one_image(cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB))
+img_bgr = cv2.imread('/home/jess/Downloads/cpr_vids/placetheotherhandontopofthefirst/nus_cpr_19_1/18.6457/cam01/output_002.png')
+outputs = estimator.process_one_image(cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB))
 
-# # Visualize and save results
-# rend_img = visualize_sample_together(img_bgr, outputs, estimator.faces)
+# Visualize and save results
+rend_img = visualize_sample_together(img_bgr, outputs, estimator.faces)
+body_3d_array = np.array(rend_img)
+# wherever not black pixel, so all other pixels, set the values equal to those
+human_3d_mask = np.any(body_3d_array, axis=-1)
+obj_img_array[human_3d_mask] = body_3d_array[human_3d_mask]
+final_combined_img = Image.fromarray(obj_img_array)
+final_combined_img.show()
+ 
 # cv2.imwrite("output.jpg", rend_img.astype(np.uint8))
 # print('SHAPES:')
 # print(outputs[0]["pred_keypoints_3d"].shape)
@@ -54,5 +70,3 @@ img_path = '/home/jess/Downloads/cpr_vids/placetheotherhandontopofthefirst/nus_c
 # print(a+b)
 # print((a+b).shape)
 
-make_2d_obj_mask_path = '/home/jess/sam3/make_mask.sh'
-subprocess.run(["bash", make_2d_obj_mask_path, img_path])
