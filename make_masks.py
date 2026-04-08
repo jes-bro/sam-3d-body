@@ -121,7 +121,7 @@ def make_masks(jpg_path, mask_path):
     # del response
     # print(obj_output.keys())
 
-def make_mask(img_file_path, mask_path, img_name):
+def make_mask(img_file_path, output_path):
     
     processor = Sam3Processor(model)
     processor2 = Sam3Processor(model)
@@ -175,10 +175,10 @@ def make_mask(img_file_path, mask_path, img_name):
     # obj_mask_img = Image.fromarray(obj_np, mode="RGB")
     combined_rgb = np.zeros((obj_mask.shape[1], obj_mask.shape[2], 3), dtype=np.uint8)
     # obj_rgb = np.zeros((human_np.shape[0], human_np.shape[1], 3))
-    outdir = Path(mask_path)
-    outdir.mkdir(parents=True, exist_ok=True)
-    mask_name = img_name.split('_')[1].replace('jpg', 'png')
-    mask_name = 'mask_' + mask_name
+    # outdir = Path(mask_path)
+    # outdir.mkdir(parents=True, exist_ok=True)
+    # mask_name = img_name.split('_')[1].replace('jpg', 'png')
+    # mask_name = 'mask_' + mask_name
     if human_np.size > 0 and human_np.shape[0] > 0:
         print("Adding the human")
         # combined_rgb[...,1] = human_np # [...,1]
@@ -189,10 +189,10 @@ def make_mask(img_file_path, mask_path, img_name):
         print("Adding the object")
     combined_img = Image.fromarray(combined_rgb, mode="RGB")
     # out_dir_name = dir + '/masks'
-    output_path = os.path.join(mask_path, mask_name)
+    # output_path = os.path.join(mask_path, mask_name)
     # np.save(output_path, combined_rgb)
     print(f"img saved to {output_path}")
-    combined_img.save(os.path.join(mask_path, mask_name))
+    combined_img.save(output_path)
 
 
     # print(type(mask))
@@ -237,6 +237,9 @@ def make_mask(img_file_path, mask_path, img_name):
     #         make_mask(img_file_path, mask_path, img)
     # make_masks(img_path, mask_path
 input_path = sys.argv[1]
+output_path = sys.argv[2]
+print(input_path)
+print(output_path)
 # input_path = "/home/jess/Downloads/cpr_vids/presshardatarateof100to120compressionsperminute/nus_cpr_11_1/27.676/cam01/output_001.png"
-make_mask(input_path, "/home/jess/sm", "_novicemannequinmask.jpg")
+make_mask(input_path, output_path)
 # make_mask("/home/jess/Downloads/cpr_pose_test/expert_pose_cpr.jpg", "/home/jess/sm", "_expertmannequinmask.jpg")
