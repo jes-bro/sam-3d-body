@@ -16,8 +16,8 @@ import sys
 
 # login()
 # Load the model
-model = build_sam3_image_model(device='cuda')
-# video_predictor = build_sam3_video_predictor()
+# model = build_sam3_image_model(device='cuda')
+video_predictor = build_sam3_video_predictor()
 
 
 # model.to(device="cpu")
@@ -236,10 +236,11 @@ def make_mask(img_file_path, output_path):
     #         # print(img_file_path)
     #         make_mask(img_file_path, mask_path, img)
     # make_masks(img_path, mask_path
-input_path = sys.argv[1]
-output_path = sys.argv[2]
-print(input_path)
-print(output_path)
-# input_path = "/home/jess/Downloads/cpr_vids/presshardatarateof100to120compressionsperminute/nus_cpr_11_1/27.676/cam01/output_001.png"
-make_mask(input_path, output_path)
+# input_path = sys.argv[1]
+# output_path = sys.argv[2]
+# print(input_path)
+# print(output_path)
+output_path = '/home/jess/sam-3d-body/'
+input_path = "/home/jess/Downloads/cpr_vids/presshardatarateof100to120compressionsperminute/nus_cpr_11_1/27.676/cam01/"
+make_masks(input_path, output_path)
 # make_mask("/home/jess/Downloads/cpr_pose_test/expert_pose_cpr.jpg", "/home/jess/sm", "_expertmannequinmask.jpg")
