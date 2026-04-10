@@ -13,7 +13,8 @@ import gc
 import sys
 # gc.collect()
 # torch.cuda.empty_cache()
-
+os.environ["PYTORCH_ALLOC_CONF"] = "expandable_segments:True"
+torch.cuda.empty_cache()
 # login()
 # Load the model
 # model = build_sam3_image_model(device='cuda')
@@ -53,9 +54,22 @@ def make_masks(jpg_path, mask_path):
         )
     )
 
+    # maybe iterate through files in the jpg dir, and then assuming the masks are sequential, name the masks like the index in the files in the directory?M 
+    # seems legit 
+    file_paths = []
+    for dir_paths, dir_names, file_names in os.walk(jpg_path):
+        dir_names.sort()
+        for file in sorted(file_names): # got to sort this, not sure about the directories
+            folder_path = os.path.join(dir_paths, "masks")
+            outdir = Path(folder_path)
+            outdir.mkdir(parents=True, exist_ok=True)
+            file_path = os.path.join(folder_path, file)
+            file_paths.append(file_path)
+
     human_output = propagate_in_video(video_predictor, id)
     # human_masks = human_output["out_binary_masks"]
-    for mask in human_output.keys():
+    for idx, mask in enumerate(human_output.keys()):
+        corresponding_img_name = file_paths[idx]
         print(human_output[mask]["out_binary_masks"].shape)
         human_mask = human_output[mask]["out_binary_masks"] # (1, 448,796)
         if human_mask.shape[0] != 0:
@@ -65,17 +79,17 @@ def make_masks(jpg_path, mask_path):
         human_np = human_mask.squeeze() 
         human_np = (human_np > 0).astype(np.uint8) * 255
         rgb = np.zeros((human_np.shape[0], human_np.shape[1], 3), dtype=np.uint8)
-        mask_loc = os.path.join(mask_path, f'mask_{mask}.png')
-        outdir = Path(mask_path)
-        outdir.mkdir(parents=True, exist_ok=True)
+        output_file_name = corresponding_img_name.replace(".png", '_mask.png')
+        print(output_file_name, flush=True)
+        mask_loc = os.path.join(folder_path, output_file_name)
         if human_np.shape[0] > 0:
             rgb[...,0] = human_np
             img = Image.fromarray(rgb, mode="RGB")
-            img.save(os.path.join(mask_path, f'mask_{mask}.png'))
-            print(f"saved mask to {mask_loc}")
+            img.save(output_file_name)
+            print(f"saved mask to {mask_loc}", flush=True)
 
         else:
-            print(f"mask {mask_loc} was empty")
+            print(f"mask {mask_loc} was empty", flush=True)
     del response
     
     # obj_np = mannequin_mask.squeeze() 
@@ -159,10 +173,10 @@ def make_mask(img_file_path, output_path):
     # mask = human_output["masks"] | obj_output["masks"]
     print("type:", type(obj_mask))
     if isinstance(obj_mask, torch.Tensor):
-        print("shape:", tuple(obj_mask.shape))
-        print("numel:", obj_mask.numel())
-        print("dtype:", obj_mask.dtype)
-        print("device:", obj_mask.device)
+        print("shape:", tuple(obj_mask.shape), flush=True)
+        print("numel:", obj_mask.numel(), flush=True)
+        print("dtype:", obj_mask.dtype, flush=True)
+        print("device:", obj_mask.device, flush=True)
     print("Here too")
     human_mask = human_mask.detach().cpu().numpy()
     mannequin_mask = obj_mask.detach().cpu().numpy()
@@ -180,9 +194,9 @@ def make_mask(img_file_path, output_path):
     # mask_name = img_name.split('_')[1].replace('jpg', 'png')
     # mask_name = 'mask_' + mask_name
     if human_np.size > 0 and human_np.shape[0] > 0:
-        print("Adding the human")
+        print("Adding the human", flush=True)
         # combined_rgb[...,1] = human_np # [...,1]
-        print("Human mask created")
+        print("Human mask created", flush=True)
         # pass
     if obj_np.size > 0 and obj_np.shape[0] > 0:
         combined_rgb[...,0] = obj_np
@@ -239,8 +253,8 @@ def make_mask(img_file_path, output_path):
 # input_path = sys.argv[1]
 # output_path = sys.argv[2]
 # print(input_path)
-# print(output_path)
-output_path = '/home/jess/sam-3d-body/'
-input_path = "/home/jess/Downloads/cpr_vids/presshardatarateof100to120compressionsperminute/nus_cpr_11_1/27.676/cam01/"
+# # print(output_path)
+output_path = '/home/jess/Downloads/cpr_vids/placetheotherhandontopofthefirst/nus_cpr_19_1/18.6457/cam01/' # '/home/jess/sam-3d-body/'
+input_path = '/home/jess/Downloads/cpr_vids/placetheotherhandontopofthefirst/nus_cpr_19_1/18.6457/cam01/'
 make_masks(input_path, output_path)
 # make_mask("/home/jess/Downloads/cpr_pose_test/expert_pose_cpr.jpg", "/home/jess/sm", "_expertmannequinmask.jpg")
