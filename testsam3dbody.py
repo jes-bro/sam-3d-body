@@ -6,6 +6,7 @@ import torch
 import numpy as np
 from notebook.utils import setup_sam_3d_body
 from tools.vis_utils import visualize_sample_together
+from tqdm import tqdm
 torch.cuda.empty_cache()
 
 
@@ -52,8 +53,12 @@ print(video_paths)
 
 # Set up the estimator
 estimator = setup_sam_3d_body(hf_repo_id="facebook/sam-3d-body-dinov3")
-
+video_count = len(video_paths)
+count = 0
 for path in video_paths: 
+    percentage = (count / video_count) * 100
+    print(f'doing video number {count} out of {video_count}')
+    print(f'percentage done: {percentage}%')
     for root, dirs, file_names in os.walk(path):
         dirs[:] = []
         dirs.sort()
@@ -67,19 +72,21 @@ for path in video_paths:
             obj_mask_path = os.path.join(root, "masks", file.replace(".png", "_mask.png"))
             output_dir = os.path.join(root, "final_combined_masks")
             os.makedirs(output_dir, exist_ok=True)
-            output_path = os.path.join(root, "final_combined_masks", file.replace(".png", "_mask.png"))
-            print(f'corresponding mask: {obj_mask_path}')
-            # Visualize and save results
-            rend_img = visualize_sample_together(img_bgr, outputs, estimator.faces)
-            body_3d_array = np.array(rend_img)
-            # wherever not black pixel, so all other pixels, set the values equal to those
-            human_3d_mask = np.any(body_3d_array, axis=-1)
-            object_mask_img = Image.open(obj_mask_path)
-            obj_img_array = np.array(object_mask_img)
-            obj_img_array[human_3d_mask] = body_3d_array[human_3d_mask]
-            final_combined_img = Image.fromarray(obj_img_array)
-            final_combined_img.save(output_path)
-            # final_combined_img.show()
+            if os.path.exists(obj_mask_path): 
+                output_path = os.path.join(root, "final_combined_masks", file.replace(".png", "_mask.png"))
+                if not os.path.exists(output_path): 
+                    print(f'corresponding mask: {obj_mask_path}')
+                    # Visualize and save results
+                    rend_img = visualize_sample_together(img_bgr, outputs, estimator.faces)
+                    body_3d_array = np.array(rend_img)
+                    # wherever not black pixel, so all other pixels, set the values equal to those
+                    human_3d_mask = np.any(body_3d_array, axis=-1)
+                    object_mask_img = Image.open(obj_mask_path)
+                    obj_img_array = np.array(object_mask_img)
+                    obj_img_array[human_3d_mask] = body_3d_array[human_3d_mask]
+                    final_combined_img = Image.fromarray(obj_img_array)
+                    final_combined_img.save(output_path)
+                # final_combined_img.show()
 exit()
         
 # cv2.imwrite("output.jpg", rend_img.astype(np.uint8))
