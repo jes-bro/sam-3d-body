@@ -65,7 +65,7 @@ for path in video_paths:
             outputs = estimator.process_one_image(cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB))
             print(f'file path/image name: {file_path}')
             obj_mask_path = os.path.join(root, "masks", file.replace(".png", "_mask.png"))
-            output_dir = os.path.join(root, "final_combined_masks", file.replace(".png", "_mask.png"))
+            output_dir = os.path.join(root, "final_combined_masks")
             os.makedirs(output_dir, exist_ok=True)
             output_path = os.path.join(root, "final_combined_masks", file.replace(".png", "_mask.png"))
             print(f'corresponding mask: {obj_mask_path}')
@@ -79,7 +79,7 @@ for path in video_paths:
             obj_img_array[human_3d_mask] = body_3d_array[human_3d_mask]
             final_combined_img = Image.fromarray(obj_img_array)
             final_combined_img.save(output_path)
-            final_combined_img.show()
+            # final_combined_img.show()
 exit()
         
 # cv2.imwrite("output.jpg", rend_img.astype(np.uint8))
