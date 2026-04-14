@@ -9,12 +9,8 @@ from tools.vis_utils import visualize_sample_together
 torch.cuda.empty_cache()
 
 
-## Get all 2d obj mask images for given video at once ## 
-img_path = '/home/jess/Downloads/cpr_vids/placetheotherhandontopofthefirst/nus_cpr_19_1/18.6457/cam01/'
-make_2d_obj_mask_path = '/home/jess/sam3/make_mask.sh'
-output_path = os.path.join(img_path, "masks") # make correspond to input img figure that out
-# output_path = '/home/jess/sam-3d-body/test_img.png'
-subprocess.run(["bash", make_2d_obj_mask_path, img_path, output_path])
+
+
 # need to do for each img in save folder yeah easier different folder per video easy to do low key cause already have the structure set up
 # object_seg_2d = Image.open(output_path)
 # obj_img_array = np.array(object_seg_2d)
@@ -26,36 +22,64 @@ subprocess.run(["bash", make_2d_obj_mask_path, img_path, output_path])
  # and run experiment tomorrow / figure out the training
 
 # object_seg_2d.show()
-# Set up the estimator
-estimator = setup_sam_3d_body(hf_repo_id="facebook/sam-3d-body-dinov3")
+
 
 # # Load and process image
 # img_bgr = cv2.imread('/home/jess/Downloads/cpr_vids/placetheotherhandontopofthefirst/nus_cpr_19_1/18.6457/cam01/output_002.png')
 ## Iteratively create each 3D human body ## 
-imgs_path = '/home/jess/Downloads/cpr_vids/placetheotherhandontopofthefirst/nus_cpr_19_1/18.6457/cam01/'
+# imgs_path = '/home/jess/Downloads/cpr_vids/placetheotherhandontopofthefirst/nus_cpr_19_1/18.6457/cam01/'
+video_paths = []
+for root, dirs, files in os.walk("/home/jess/cpr_clips_5fps_copy/"):
+    if "cam" in root.lower():
+        video_paths.append(root)
+        dirs.clear()  # stop recursing deeper into this branch
+print(video_paths)
+# exit()
+# do for 
 
-for root, dirs, file_names in os.walk(imgs_path):
-    dirs[:] = []
-    dirs.sort()
-    for file in sorted(file_names):
-        file_path = os.path.join(root, file)
-        # print(file_path)
-        # extract image number, get corresponding mask number. then, once you have that, add the loop that does this for everything
-        img_bgr = cv2.imread(file_path)
-        outputs = estimator.process_one_image(cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB))
-        print(f'file path/image name: {file_path}')
-        obj_mask_path = os.path.join(root, "masks", file.replace(".png", "_mask.png"))
-        print(f'corresponding mask: {obj_mask_path}')
-        # Visualize and save results
-        rend_img = visualize_sample_together(img_bgr, outputs, estimator.faces)
-        body_3d_array = np.array(rend_img)
-        # wherever not black pixel, so all other pixels, set the values equal to those
-        human_3d_mask = np.any(body_3d_array, axis=-1)
-        object_mask_img = Image.open(obj_mask_path)
-        obj_img_array = np.array(object_mask_img)
-        obj_img_array[human_3d_mask] = body_3d_array[human_3d_mask]
-        final_combined_img = Image.fromarray(obj_img_array)
-        final_combined_img.show()
+## Get all 2d obj mask images for given video at once ## 
+# img_path = '/home/jess/Downloads/cpr_vids/placetheotherhandontopofthefirst/nus_cpr_19_1/18.6457/cam01/'
+# make_2d_obj_mask_path = '/home/jess/sam3/make_mask.sh'
+# output_path = os.path.join(img_path, "masks") # make correspond to input img figure that out
+# # output_path = '/home/jess/sam-3d-body/test_img.png'
+# subprocess.run(["bash", make_2d_obj_mask_path, img_path, output_path])
+# video_paths = ...
+
+# for path in video_paths: 
+#     make_2d_obj_mask_path = '/home/jess/sam3/make_mask.sh'
+#     output_path = os.path.join(path, "masks") # make correspond to input img figure that out
+#     subprocess.run(["bash", make_2d_obj_mask_path, path, output_path])
+
+# Set up the estimator
+estimator = setup_sam_3d_body(hf_repo_id="facebook/sam-3d-body-dinov3")
+
+for path in video_paths: 
+    for root, dirs, file_names in os.walk(path):
+        dirs[:] = []
+        dirs.sort()
+        for file in sorted(file_names):
+            file_path = os.path.join(root, file)
+            # print(file_path)
+            # extract image number, get corresponding mask number. then, once you have that, add the loop that does this for everything
+            img_bgr = cv2.imread(file_path)
+            outputs = estimator.process_one_image(cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB))
+            print(f'file path/image name: {file_path}')
+            obj_mask_path = os.path.join(root, "masks", file.replace(".png", "_mask.png"))
+            output_dir = os.path.join(root, "final_combined_masks", file.replace(".png", "_mask.png"))
+            os.makedirs(output_dir, exist_ok=True)
+            output_path = os.path.join(root, "final_combined_masks", file.replace(".png", "_mask.png"))
+            print(f'corresponding mask: {obj_mask_path}')
+            # Visualize and save results
+            rend_img = visualize_sample_together(img_bgr, outputs, estimator.faces)
+            body_3d_array = np.array(rend_img)
+            # wherever not black pixel, so all other pixels, set the values equal to those
+            human_3d_mask = np.any(body_3d_array, axis=-1)
+            object_mask_img = Image.open(obj_mask_path)
+            obj_img_array = np.array(object_mask_img)
+            obj_img_array[human_3d_mask] = body_3d_array[human_3d_mask]
+            final_combined_img = Image.fromarray(obj_img_array)
+            final_combined_img.save(output_path)
+            final_combined_img.show()
 exit()
         
 # cv2.imwrite("output.jpg", rend_img.astype(np.uint8))
