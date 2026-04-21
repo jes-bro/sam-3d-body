@@ -30,7 +30,7 @@ torch.cuda.empty_cache()
 ## Iteratively create each 3D human body ## 
 # imgs_path = '/home/jess/Downloads/cpr_vids/placetheotherhandontopofthefirst/nus_cpr_19_1/18.6457/cam01/'
 video_paths = []
-for root, dirs, files in os.walk("/home/jess/cpr_clips_5fps_copy/"):
+for root, dirs, files in os.walk("/simurgh2/projects/sam-3d-body/cpr_clips_5fps_copy/"):
     if "cam" in root.lower():
         video_paths.append(root)
         dirs.clear()  # stop recursing deeper into this branch
