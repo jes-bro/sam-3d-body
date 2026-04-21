@@ -59,33 +59,39 @@ for path in video_paths:
     percentage = (count / video_count) * 100
     print(f'doing video number {count} out of {video_count}')
     print(f'percentage done: {percentage}%')
+    count += 1
     for root, dirs, file_names in os.walk(path):
         dirs[:] = []
         dirs.sort()
         for file in sorted(file_names):
-            file_path = os.path.join(root, file)
-            # print(file_path)
-            # extract image number, get corresponding mask number. then, once you have that, add the loop that does this for everything
-            img_bgr = cv2.imread(file_path)
-            outputs = estimator.process_one_image(cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB))
-            print(f'file path/image name: {file_path}')
-            obj_mask_path = os.path.join(root, "masks", file.replace(".png", "_mask.png"))
+            print('HERE IS THE FILE WE ARE CURRENTLY PROCESSING:', file)
             output_dir = os.path.join(root, "final_combined_masks")
-            os.makedirs(output_dir, exist_ok=True)
-            if os.path.exists(obj_mask_path): 
-                output_path = os.path.join(root, "final_combined_masks", file.replace(".png", "_mask.png"))
-                if not os.path.exists(output_path): 
-                    print(f'corresponding mask: {obj_mask_path}')
-                    # Visualize and save results
-                    rend_img = visualize_sample_together(img_bgr, outputs, estimator.faces)
-                    body_3d_array = np.array(rend_img)
-                    # wherever not black pixel, so all other pixels, set the values equal to those
-                    human_3d_mask = np.any(body_3d_array, axis=-1)
-                    object_mask_img = Image.open(obj_mask_path)
-                    obj_img_array = np.array(object_mask_img)
-                    obj_img_array[human_3d_mask] = body_3d_array[human_3d_mask]
-                    final_combined_img = Image.fromarray(obj_img_array)
-                    final_combined_img.save(output_path)
+            output_path = os.path.join(root, "final_combined_masks", file.replace(".png", "_mask.png"))
+            if not os.path.exists(output_path):
+                print('HERE IS THE OUTPUT DIRECTORY THAT WE ARE CREATING:', output_dir)
+                os.makedirs(output_dir, exist_ok=True)
+                file_path = os.path.join(root, file)
+                # print(f'file path/image name: {file_path}')
+                obj_mask_path = os.path.join(root, "masks", file.replace(".png", "_mask.png"))
+                if os.path.exists(obj_mask_path): 
+                    print('HERE IS THE MASK WE ARE USING:', obj_mask_path)
+                    img_bgr = cv2.imread(file_path)
+                    print('HERE IS THE FINAL COMBINED HUMAN + OBJ MASK:', output_path)
+                    os.makedirs(output_dir, exist_ok=True)
+                    outputs = estimator.process_one_image(cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB))
+                        # print(f'corresponding mask: {obj_mask_path}')
+                        # Visualize and save results
+                    if outputs: 
+                        rend_img = visualize_sample_together(img_bgr, outputs, estimator.faces)
+                        # if rend_img: 
+                        body_3d_array = np.array(rend_img)
+                        # wherever not black pixel, so all other pixels, set the values equal to those
+                        human_3d_mask = np.any(body_3d_array, axis=-1)
+                        object_mask_img = Image.open(obj_mask_path)
+                        obj_img_array = np.array(object_mask_img)
+                        obj_img_array[human_3d_mask] = body_3d_array[human_3d_mask]
+                        final_combined_img = Image.fromarray(obj_img_array)
+                        final_combined_img.save(output_path)
                 # final_combined_img.show()
 exit()
         
