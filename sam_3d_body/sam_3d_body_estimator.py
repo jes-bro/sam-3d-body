@@ -154,6 +154,14 @@ class SAM3DBodyEstimator:
             masks, masks_score = None, None
 
         #################### Construct batch data samples ####################
+        if len(boxes) > 1:
+            areas = (boxes[:, 2] - boxes[:, 0]) * (boxes[:, 3] - boxes[:, 1])
+            best_idx = np.argmax(areas)
+            boxes = boxes[best_idx].reshape(1, 4)
+            if masks is not None:
+                masks = masks[best_idx:best_idx+1]
+            if masks_score is not None:
+                masks_score = masks_score[best_idx:best_idx+1]
         batch = prepare_batch(img, self.transform, boxes, masks, masks_score)
 
         #################### Run model inference on an image ####################
