@@ -94,7 +94,7 @@ def visualize_sample(img_cv2, outputs, faces):
 def visualize_sample_together(img_cv2, outputs, faces):
     # Render everything together
     img_keypoints = img_cv2.copy()
-    img_mesh = img_cv2.copy()
+    img_mesh = np.zeros_like(img_cv2.copy())
 
     # First, sort by depth, furthest to closest
     all_depths = np.stack([tmp['pred_cam_t'] for tmp in outputs], axis=0)[:, 2]
@@ -148,6 +148,5 @@ def visualize_sample_together(img_cv2, outputs, faces):
         * 255
     )
 
-    cur_img = np.concatenate([img_cv2, img_keypoints, img_mesh, img_mesh_side], axis=1)
 
-    return cur_img
+    return img_mesh
